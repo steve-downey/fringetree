@@ -13,3 +13,7 @@ test:
 install:
 	cd $(BUILD_DIR) && \
 	make install
+
+clean:
+	cd $(BUILD_DIR) && \
+	make clean
