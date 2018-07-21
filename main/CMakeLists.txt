@@ -7,4 +7,9 @@ target_sources(
 
 target_link_libraries(fringe fringetree)
 
-install(TARGETS fringe DESTINATION bin)
+include(GNUInstallDirs)
+
+install(
+  TARGETS fringe
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )

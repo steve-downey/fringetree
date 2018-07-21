@@ -5,14 +5,29 @@ target_sources(
   PRIVATE
   fringetree.cpp)
 
+include(GNUInstallDirs)
+
 target_include_directories(fringetree PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<INSTALL_INTERFACE:include/fringetree>  # <prefix>/include/fringetree
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LOWER_PROJECT_NAME}>  # <prefix>/include/fringetree
   )
 
-install(TARGETS fringetree DESTINATION lib)
-install(FILES fringetree.h DESTINATION include/fringetree)
+install(
+  TARGETS fringetree
+  EXPORT ${TARGETS_EXPORT_NAME}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
 
+string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_LOWER_PROJECT_NAME)
+
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LOWER_PROJECT_NAME}
+  FILES_MATCHING PATTERN "*.h"
+  )
+
+
+## Tests
 add_executable(fringetree_test "")
 
 target_sources(
