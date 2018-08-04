@@ -40,3 +40,44 @@ TEST(TreeTest, makeBranch) {
     ASSERT_EQ(tag(b1), b1->tag());
 
 }
+
+
+TEST(TreeTest, breadth) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto i =  breadth(*t);
+    ASSERT_EQ(3, i);
+
+    auto empty = Tree::empty();
+    ASSERT_EQ(0, breadth(*empty));
+
+    auto t2 = Tree::branch(
+        Tree::branch(Tree::empty(), Tree::leaf(1)),
+        Tree::branch(Tree::leaf(2), Tree::empty())
+        );
+    ASSERT_EQ(2, breadth(*t2));
+}
+
+TEST(TreeTest, depth) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto i =  depth(*t);
+    ASSERT_EQ(3, i);
+
+    auto empty = Tree::empty();
+    ASSERT_EQ(0, depth(*empty));
+
+    auto t2 = Tree::branch(
+        Tree::branch(Tree::empty(), Tree::leaf(1)),
+        Tree::branch(Tree::leaf(2), Tree::empty())
+        );
+    ASSERT_EQ(3, depth(*t2));
+}
