@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace fringetree {
 
@@ -45,6 +46,7 @@ class Leaf {
     Leaf() : tag_(0), v_(0){};
     Leaf(Tag tag, Value v) : tag_(tag), v_(v) {}
     auto tag() const -> Tag { return tag_; }
+    auto value() const -> Value { return v_; }
 };
 
 template <typename Tag, typename Value>
@@ -95,26 +97,24 @@ class Tree {
 
 constexpr auto tag = [](auto tree) { return tree->tag(); };
 
-namespace detail {
-template <typename T, typename V>
-struct breadth_;
-}
-
-template <typename T, typename V>
-auto breadth(Tree<T, V> const& tree) -> int {
-    return tree.visit(detail::breadth_<T, V>{});
-}
-
-namespace detail {
-template <typename T, typename V>
-struct breadth_ {
-    auto operator()(Empty<T, V> const&) { return 0; }
-    auto operator()(Leaf<T, V> const&) { return 1; }
-    auto operator()(Branch<T, V> const& b) {
-        return breadth(*(b.left())) + breadth(*(b.right()));
+constexpr inline struct breadth {
+    template <typename T, typename V>
+    auto operator()(Empty<T, V> const&) const -> T {
+        return 0;
     }
-};
-} // namespace detail
+
+    template <typename T, typename V>
+    auto operator()(Leaf<T, V> const&) const -> T {
+        return 1;
+    }
+
+    template <typename T, typename V>
+    auto operator()(Branch<T, V> const& b) const -> T {
+        return b.left()->visit(*this) + b.right()->visit(*this);
+    }
+} breadth_;
+
+constexpr auto breadth = [](auto tree) { return tree->visit(breadth_); };
 
 namespace detail {
 template <typename T, typename V>
@@ -136,6 +136,35 @@ struct depth_ {
         auto rightDepth = depth(*(b.right())) + 1;
 
         return (leftDepth > rightDepth) ? leftDepth : rightDepth;
+    }
+};
+} // namespace detail
+
+namespace detail {
+template <typename T, typename V>
+struct flatten_;
+}
+
+template <typename T, typename V>
+auto flatten(Tree<T, V> const& tree) -> std::vector<V> {
+    return tree.visit(detail::flatten_<T, V>{});
+}
+
+namespace detail {
+template <typename T, typename V>
+struct flatten_ {
+    auto operator()(Empty<T, V> const&) { return std::vector<V>{}; }
+    auto operator()(Leaf<T, V> const& l) {
+        std::vector<V> v;
+        v.emplace_back(l.value());
+        return v;
+    }
+    auto operator()(Branch<T, V> const& b) {
+        auto leftFlatten  = flatten(*(b.left()));
+        auto rightFlatten = flatten(*(b.right()));
+        leftFlatten.insert(
+            leftFlatten.end(), rightFlatten.begin(), rightFlatten.end());
+        return leftFlatten;
     }
 };
 } // namespace detail
