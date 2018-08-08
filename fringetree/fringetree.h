@@ -116,58 +116,52 @@ constexpr inline struct breadth {
 
 constexpr auto breadth = [](auto tree) { return tree->visit(breadth_); };
 
-namespace detail {
-template <typename T, typename V>
-struct depth_;
-}
+constexpr inline struct depth {
+    template <typename T, typename V>
+    auto operator()(Empty<T, V> const&) const -> T {
+        return 0;
+    }
 
-template <typename T, typename V>
-auto depth(Tree<T, V> const& tree) -> int {
-    return tree.visit(detail::depth_<T, V>{});
-}
+    template <typename T, typename V>
+    auto operator()(Leaf<T, V> const&) const -> T {
+        return 1;
+    }
 
-namespace detail {
-template <typename T, typename V>
-struct depth_ {
-    auto operator()(Empty<T, V> const&) { return 0; }
-    auto operator()(Leaf<T, V> const&) { return 1; }
-    auto operator()(Branch<T, V> const& b) {
-        auto leftDepth  = depth(*(b.left())) + 1;
-        auto rightDepth = depth(*(b.right())) + 1;
+    template <typename T, typename V>
+    auto operator()(Branch<T, V> const& b) const -> T {
+        auto leftDepth  = (b.left()->visit(*this))+ 1;
+        auto rightDepth = (b.right()->visit(*this)) + 1;
 
         return (leftDepth > rightDepth) ? leftDepth : rightDepth;
     }
-};
-} // namespace detail
+} depth_;
 
-namespace detail {
-template <typename T, typename V>
-struct flatten_;
-}
+constexpr auto depth = [](auto tree) { return tree->visit(depth_); };
 
-template <typename T, typename V>
-auto flatten(Tree<T, V> const& tree) -> std::vector<V> {
-    return tree.visit(detail::flatten_<T, V>{});
-}
+constexpr inline struct flatten {
+    template <typename T, typename V>
+    auto operator()(Empty<T, V> const&) const -> std::vector<V> {
+        return std::vector<V>{};
+    }
 
-namespace detail {
-template <typename T, typename V>
-struct flatten_ {
-    auto operator()(Empty<T, V> const&) { return std::vector<V>{}; }
-    auto operator()(Leaf<T, V> const& l) {
+    template <typename T, typename V>
+    auto operator()(Leaf<T, V> const& l) const -> std::vector<V> {
         std::vector<V> v;
         v.emplace_back(l.value());
         return v;
     }
-    auto operator()(Branch<T, V> const& b) {
-        auto leftFlatten  = flatten(*(b.left()));
-        auto rightFlatten = flatten(*(b.right()));
+
+    template <typename T, typename V>
+    auto operator()(Branch<T, V> const& b) const -> std::vector<V>{
+        auto leftFlatten  = b.left()->visit(*this);
+        auto rightFlatten = b.right()->visit(*this);
         leftFlatten.insert(
             leftFlatten.end(), rightFlatten.begin(), rightFlatten.end());
         return leftFlatten;
     }
-};
-} // namespace detail
+} flatten_;
+
+constexpr auto flatten = [](auto tree) { return tree->visit(flatten_); };
 
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS

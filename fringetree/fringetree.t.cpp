@@ -69,17 +69,17 @@ TEST(TreeTest, depth) {
         Tree::leaf(3)
         );
 
-    auto i =  depth(*t);
+    auto i =  depth(t);
     ASSERT_EQ(3, i);
 
     auto empty = Tree::empty();
-    ASSERT_EQ(0, depth(*empty));
+    ASSERT_EQ(0, depth(empty));
 
     auto t2 = Tree::branch(
         Tree::branch(Tree::empty(), Tree::leaf(1)),
         Tree::branch(Tree::leaf(2), Tree::empty())
         );
-    ASSERT_EQ(3, depth(*t2));
+    ASSERT_EQ(3, depth(t2));
 }
 
 TEST(TreeTest, flatten) {
@@ -90,17 +90,17 @@ TEST(TreeTest, flatten) {
         );
 
     std::vector<int> expected1 = {1, 2, 3};
-    auto i =  flatten(*t);
+    auto i =  flatten(t);
     ASSERT_EQ(expected1, i);
 
     std::vector<int> expected2 = {};
     auto empty = Tree::empty();
-    ASSERT_EQ(expected2, flatten(*empty));
+    ASSERT_EQ(expected2, flatten(empty));
 
     std::vector<int> expected3 = {1, 2};
     auto t2 = Tree::branch(
         Tree::branch(Tree::empty(), Tree::leaf(1)),
         Tree::branch(Tree::leaf(2), Tree::empty())
         );
-    ASSERT_EQ(expected3, flatten(*t2));
+    ASSERT_EQ(expected3, flatten(t2));
 }
