@@ -104,3 +104,34 @@ TEST(TreeTest, flatten) {
         );
     ASSERT_EQ(expected3, flatten(t2));
 }
+
+TEST(TreeTest, prepend) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto t_ = prepend(0, t);
+
+    std::vector<int> expected1 = {0, 1, 2, 3};
+    auto i =  flatten(t_);
+    ASSERT_EQ(expected1, i);
+
+    std::vector<int> expected2 = {0};
+    auto empty = Tree::empty();
+    auto empty_ = prepend(0, empty);
+    ASSERT_EQ(expected2, flatten(empty_));
+
+    std::vector<int> expected3 = {0, 1, 2};
+    auto t3 = Tree::branch(
+        Tree::branch(Tree::empty(), Tree::leaf(1)),
+        Tree::branch(Tree::leaf(2), Tree::empty())
+        );
+    auto t3_ = prepend(0, t3);
+    ASSERT_EQ(expected3, flatten(t3_));
+
+
+    auto l_ = prepend(0, Tree::leaf(1));
+    ASSERT_EQ(std::vector({0,1}), flatten(l_));
+}
