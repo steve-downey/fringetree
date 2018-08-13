@@ -129,7 +129,7 @@ constexpr inline struct depth {
 
     template <typename T, typename V>
     auto operator()(Branch<T, V> const& b) const -> T {
-        auto leftDepth  = (b.left()->visit(*this))+ 1;
+        auto leftDepth  = (b.left()->visit(*this)) + 1;
         auto rightDepth = (b.right()->visit(*this)) + 1;
 
         return (leftDepth > rightDepth) ? leftDepth : rightDepth;
@@ -152,7 +152,7 @@ constexpr inline struct flatten {
     }
 
     template <typename T, typename V>
-    auto operator()(Branch<T, V> const& b) const -> std::vector<V>{
+    auto operator()(Branch<T, V> const& b) const -> std::vector<V> {
         auto leftFlatten  = b.left()->visit(*this);
         auto rightFlatten = b.right()->visit(*this);
         leftFlatten.insert(
@@ -166,7 +166,7 @@ constexpr auto flatten = [](auto tree) { return tree->visit(flatten_); };
 template <typename OS>
 struct printer_ {
     OS& os_;
-    printer_(OS& os) : os_(os) {};
+    printer_(OS& os) : os_(os){};
 
     template <typename T, typename U>
     void operator()(Empty<T, U> const& e) const {
@@ -175,12 +175,16 @@ struct printer_ {
 
     template <typename T, typename U>
     void operator()(Leaf<T, U> const& l) const {
-        os_ << '"' << (&l) << '"' <<  " [shape=record label=\"<f1> value=" << l.value() << "\\n tag=" << l.tag() << "\"]\n";
+        os_ << '"' << (&l) << '"'
+            << " [shape=record label=\"<f1> value=" << l.value()
+            << "\\n tag=" << l.tag() << "\"]\n";
     }
 
     template <typename T, typename U>
     void operator()(Branch<T, U> const& b) const {
-        os_ << '"' << (&b) << '"' << " [shape=record label=\"<f0> | <f1> tag=" << b.tag() << "| <f2>\" ]\n";
+        os_ << '"' << (&b) << '"'
+            << " [shape=record label=\"<f0> | <f1> tag=" << b.tag()
+            << "| <f2>\" ]\n";
         os_ << '"' << (&b) << "\":f0 -> \"" << (b.left().get()) << "\":f1\n";
         os_ << '"' << (&b) << "\":f2 -> \"" << (b.right().get()) << "\":f1\n";
         (b.left()->visit(*this));
@@ -199,28 +203,33 @@ constexpr auto printer = [](auto& os, auto tree) {
 template <typename V>
 struct prepend_ {
     V v_;
-    prepend_(V const& v) : v_(v) {};
-    prepend_(V && v) : v_(v) {};
+    prepend_(V const& v) : v_(v){};
+    prepend_(V&& v) : v_(v){};
 
     template <typename T, typename U>
-    auto operator()(Empty<T, U> const&) const ->  std::shared_ptr<Tree<T,U>> {
-        return Tree<T,U>::leaf(v_);
+    auto operator()(Empty<T, U> const&) const -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::leaf(v_);
     }
 
     template <typename T, typename U>
-    auto operator()(Leaf<T, U> const& l) const -> std::shared_ptr<Tree<T,U>> {
-        return Tree<T,U>::branch(Tree<T,U>::leaf(v_), Tree<T,U>::leaf(l.value()));
+    auto operator()(Leaf<T, U> const& l) const -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::branch(Tree<T, U>::leaf(v_),
+                                  Tree<T, U>::leaf(l.value()));
     }
 
     template <typename T, typename U>
-    auto operator()(Branch<T, U> const& b) const -> std::shared_ptr<Tree<T,U>> {
-        return Tree<T,U>::branch(Tree<T,U>::leaf(v_), Tree<T,U>::branch(b.left(), b.right()));
-;
+    auto operator()(Branch<T, U> const& b) const
+        -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::branch(Tree<T, U>::leaf(v_),
+                                  Tree<T, U>::branch(b.left(), b.right()));
+        ;
     }
 };
 
-constexpr auto prepend = [](auto v, auto tree) { prepend_ p(v);
-        return tree->visit(p); };
+constexpr auto prepend = [](auto v, auto tree) {
+    prepend_ p(v);
+    return tree->visit(p);
+};
 
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
