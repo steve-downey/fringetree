@@ -231,6 +231,37 @@ constexpr auto prepend = [](auto v, auto tree) {
     return tree->visit(p);
 };
 
+template <typename V>
+struct append_ {
+    V v_;
+    append_(V const& v) : v_(v){};
+    append_(V&& v) : v_(v){};
+
+    template <typename T, typename U>
+    auto operator()(Empty<T, U> const&) const -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::leaf(v_);
+    }
+
+    template <typename T, typename U>
+    auto operator()(Leaf<T, U> const& l) const -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::branch(Tree<T, U>::leaf(l.value()),
+                                  Tree<T, U>::leaf(v_));
+    }
+
+    template <typename T, typename U>
+    auto operator()(Branch<T, U> const& b) const
+        -> std::shared_ptr<Tree<T, U>> {
+        return Tree<T, U>::branch(Tree<T, U>::branch(b.left(), b.right()),
+                                  Tree<T, U>::leaf(v_));
+        ;
+    }
+};
+
+constexpr auto append = [](auto v, auto tree) {
+                             append_ p(v);
+                             return tree->visit(p);
+                         };
+
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
 // ============================================================================
