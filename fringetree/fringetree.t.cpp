@@ -166,3 +166,81 @@ TEST(TreeTest, append) {
     auto l_ = append(0, Tree::leaf(1));
     ASSERT_EQ(std::vector({1,0}), flatten(l_));
 }
+
+TEST(TreeTest, leftView) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+     auto vl = view_l(t);
+     ASSERT_EQ(vl.isView(), true);
+     auto v = vl.view();
+     ASSERT_EQ(v.v_, 1);
+
+     std::vector<int> expected1 = {2, 3};
+     auto i =  flatten(v.tree_);
+     ASSERT_EQ(expected1, i);
+
+     auto empty = Tree::empty();
+     auto vl_empty = view_l(empty);
+     ASSERT_EQ(vl_empty.isView(), false);
+     ASSERT_EQ(vl_empty.isNil(), true);
+
+     std::vector<int> expected3 = {1, 2, 0};
+     auto t3 = Tree::branch(
+         Tree::branch(Tree::empty(), Tree::leaf(1)),
+         Tree::branch(Tree::leaf(2), Tree::empty())
+         );
+     auto vl3 = view_l(t3);
+     ASSERT_EQ(vl3.isView(), true);
+     auto v3 = vl3.view();
+     ASSERT_EQ(v3.v_, 1);
+
+     auto l_ = Tree::leaf(7);
+     auto vl4 = view_l(l_);
+     ASSERT_EQ(vl4.isView(), true);
+     auto v4= vl4.view();
+     ASSERT_EQ(v4.v_, 7);
+     ASSERT_EQ(v4.tree_->isEmpty(), true);
+}
+
+TEST(TreeTest, rightView) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto vr = view_r(t);
+    ASSERT_EQ(vr.isView(), true);
+    auto v = vr.view();
+    ASSERT_EQ(v.v_, 3);
+
+    std::vector<int> expected1 = {1, 2};
+    auto i =  flatten(v.tree_);
+    ASSERT_EQ(expected1, i);
+
+    auto empty = Tree::empty();
+    auto vr_empty = view_r(empty);
+    ASSERT_EQ(vr_empty.isView(), false);
+    ASSERT_EQ(vr_empty.isNil(), true);
+
+    std::vector<int> expected3 = {1, 2, 0};
+    auto t3 = Tree::branch(
+        Tree::branch(Tree::empty(), Tree::leaf(1)),
+        Tree::branch(Tree::leaf(2), Tree::empty())
+        );
+    auto vr3 = view_r(t3);
+    ASSERT_EQ(vr3.isView(), true);
+    auto v3 = vr3.view();
+    ASSERT_EQ(v3.v_, 2);
+
+    auto l_ = Tree::leaf(7);
+    auto vr4 = view_r(l_);
+    ASSERT_EQ(vr4.isView(), true);
+    auto v4= vr4.view();
+    ASSERT_EQ(v4.v_, 7);
+    ASSERT_EQ(v4.tree_->isEmpty(), true);
+}

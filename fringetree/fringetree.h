@@ -59,6 +59,8 @@ class Empty {
 template <typename Tag, typename Value>
 class Tree {
   public:
+    using Tag_ = Tag;
+    using Value_ = Value;
     using Leaf_   = Leaf<Tag, Value>;
     using Branch_ = Branch<Tag, Value>;
     using Empty_  = Empty<Tag, Value>;
@@ -93,7 +95,12 @@ class Tree {
     auto visit(Callable&& c) const {
         return std::visit(c, data_);
     }
+
+    bool isEmpty() {
+        return std::holds_alternative<Empty_>(data_);
+    }
 };
+
 
 constexpr auto tag = [](auto tree) { return tree->tag(); };
 
@@ -261,6 +268,95 @@ constexpr auto append = [](auto v, auto tree) {
                              append_ p(v);
                              return tree->visit(p);
                          };
+
+template <typename Tree>
+struct View {
+    struct View_ {
+        typename Tree::Value_ v_;
+        std::shared_ptr<Tree> tree_;
+    };
+
+    struct Nil_ {};
+
+    std::variant<View_, Nil_> view_;
+
+    View(typename Tree::Value_ const& v, std::shared_ptr<Tree> t)
+        : view_(View_{v, t}) {}
+
+    View() : view_(Nil_{}) {}
+
+    bool isNil() { return std::holds_alternative<Nil_>(view_); }
+
+    bool isView() { return std::holds_alternative<View_>(view_); }
+
+    auto view() { return std::get<View_>(view_); }
+};
+
+constexpr inline struct view_l {
+    template <typename T, typename U>
+    auto operator()(Empty<T, U> const&) const -> View<Tree<T, U>> {
+        return View<Tree<T, U>>{};
+    }
+
+    template <typename T, typename U>
+    auto operator()(Leaf<T, U> const& l) const -> View<Tree<T, U>> {
+        return View<Tree<T, U>>{l.value(), Tree<T, U>::empty()};
+    }
+
+    template <typename T, typename U>
+    auto operator()(Branch<T, U> const& b) const -> View<Tree<T, U>> {
+        if (b.left()->isEmpty() && b.right()->isEmpty()) {
+            return View<Tree<T, U>>{};
+        }
+
+        if (b.left()->isEmpty()) {
+            auto r    = b.right()->visit(*this);
+            auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
+            return View<Tree<T, U>>{view.v_,
+                                    Tree<T, U>::branch(b.left(), view.tree_)};
+        }
+
+        auto r    = b.left()->visit(*this);
+        auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
+        return View<Tree<T, U>>{view.v_,
+                                Tree<T, U>::branch(view.tree_, b.right())};
+    }
+} view_l_;
+
+constexpr auto view_l = [](auto tree) { return tree->visit(view_l_); };
+
+constexpr inline struct view_r {
+    template <typename T, typename U>
+    auto operator()(Empty<T, U> const&) const -> View<Tree<T, U>> {
+        return View<Tree<T, U>>{};
+    }
+
+    template <typename T, typename U>
+    auto operator()(Leaf<T, U> const& l) const -> View<Tree<T, U>> {
+        return View<Tree<T, U>>{l.value(), Tree<T, U>::empty()};
+    }
+
+    template <typename T, typename U>
+    auto operator()(Branch<T, U> const& b) const -> View<Tree<T, U>> {
+        if (b.left()->isEmpty() && b.right()->isEmpty()) {
+            return View<Tree<T, U>>{};
+        }
+
+        if (b.right()->isEmpty()) {
+            auto l    = b.left()->visit(*this);
+            auto view = std::get<typename View<Tree<T, U>>::View_>(l.view_);
+            return View<Tree<T, U>>{view.v_,
+                                    Tree<T, U>::branch(view.tree_, b.right())};
+        }
+
+        auto r    = b.right()->visit(*this);
+        auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
+        return View<Tree<T, U>>{view.v_,
+                                Tree<T, U>::branch(b.left(), view.tree_)};
+    }
+} view_r_;
+
+constexpr auto view_r = [](auto tree) { return tree->visit(view_r_); };
 
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
