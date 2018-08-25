@@ -46,7 +46,10 @@ install: $(BUILD_PATH)/CMakeCache.txt
 ctest: $(BUILD_PATH)/CMakeCache.txt
 	cd $(BUILD_PATH) && ctest
 
-test: build ctest
+ctest_ : build
+	cd $(BUILD_PATH) && ctest
+
+test: ctest_
 
 cmake: | $(BUILD_PATH)
 	cd $(BUILD_PATH) && $(run-cmake)
