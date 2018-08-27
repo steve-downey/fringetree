@@ -277,4 +277,9 @@ TEST(TreeTest, listOps) {
     ASSERT_EQ(std::vector<int>{}, flatten(tail(l)));
     ASSERT_EQ(std::vector<int>{}, flatten(init(l)));
 
+    ASSERT_EQ(is_empty(l), false);
+    EXPECT_EQ(is_empty(t3), false);
+    EXPECT_EQ(is_empty(t), false);
+    EXPECT_EQ(is_empty(Tree::empty()), true);
+
 }
