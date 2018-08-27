@@ -244,3 +244,37 @@ TEST(TreeTest, rightView) {
     ASSERT_EQ(v4.v_, 7);
     ASSERT_EQ(v4.tree_->isEmpty(), true);
 }
+
+TEST(TreeTest, listOps) {
+    using Tree = Tree<int, int>;
+    auto t = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    ASSERT_EQ(head(t), 1);
+    ASSERT_EQ(last(t), 3);
+
+    std::vector<int> expected1 = {2, 3};
+    ASSERT_EQ(expected1, flatten(tail(t)));
+
+    std::vector<int> expected2 = {1, 2};
+    ASSERT_EQ(expected2, flatten(init(t)));
+
+    auto t3 = Tree::branch(
+        Tree::branch(Tree::empty(), Tree::leaf(1)),
+        Tree::branch(Tree::leaf(2), Tree::empty())
+        );
+
+    ASSERT_EQ(head(t3), 1);
+    ASSERT_EQ(last(t3), 2);
+    ASSERT_EQ(std::vector<int>{2}, flatten(tail(t3)));
+    ASSERT_EQ(std::vector<int>{1}, flatten(init(t3)));
+
+    auto l = Tree::leaf(7);
+    ASSERT_EQ(head(l), 7);
+    ASSERT_EQ(last(l), 7);
+    ASSERT_EQ(std::vector<int>{}, flatten(tail(l)));
+    ASSERT_EQ(std::vector<int>{}, flatten(init(l)));
+
+}

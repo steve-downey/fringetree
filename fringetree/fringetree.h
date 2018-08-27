@@ -358,6 +358,33 @@ constexpr inline struct view_r {
 
 constexpr auto view_r = [](auto tree) { return tree->visit(view_r_); };
 
+
+constexpr auto head = [](auto tree) {
+                          auto view = tree->visit(view_l_);
+                          return view.view().v_;
+                      };
+
+constexpr auto tail = [](auto tree) {
+                          auto view = tree->visit(view_l_);
+                          return view.view().tree_;
+                      };
+
+constexpr auto last = [](auto tree) {
+                          auto view = tree->visit(view_r_);
+                          return view.view().v_;
+                      };
+
+constexpr auto init = [](auto tree) {
+                          auto view = tree->visit(view_r_);
+                          return view.view().tree_;
+                      };
+
+constexpr auto is_empty = [](auto tree) {
+                            auto view = tree->visit(view_r_);
+                            return view.isNil();
+                    };
+
+
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
 // ============================================================================
