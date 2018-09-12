@@ -8,9 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(TARGETS_EXPORT_NAME ${CMAKE_PROJECT_NAME}Targets)
 
-add_subdirectory(googletest EXCLUDE_FROM_ALL)
-add_subdirectory(fringetree)
-add_subdirectory(main)
+add_subdirectory(extern)
+add_subdirectory(src)
 
 include(GNUInstallDirs)
 

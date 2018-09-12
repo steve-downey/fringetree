@@ -1,2 +1,2 @@
 // fringetree.cpp                                                     -*-C++-*-
-#include <fringetree.h>
+#include <fringetree/fringetree.h>

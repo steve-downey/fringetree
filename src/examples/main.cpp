@@ -1,4 +1,4 @@
-#include <fringetree.h>
+#include <fringetree/fringetree.h>
 
 #include <iostream>
 
