@@ -1,3 +1,6 @@
+
+include(GNUInstallDirs)
+
 add_executable(fringe "")
 
 target_sources(
@@ -7,9 +10,21 @@ target_sources(
 
 target_link_libraries(fringe fringetree)
 
-include(GNUInstallDirs)
-
 install(
   TARGETS fringe
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+
+add_executable(prepend "")
+
+target_sources(
+  prepend
+  PRIVATE
+  prepend.cpp)
+
+target_link_libraries(prepend fringetree)
+
+install(
+  TARGETS prepend
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
