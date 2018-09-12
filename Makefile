@@ -12,7 +12,7 @@ else ifeq (clang-master,$(TOOLCHAIN))
 	BUILD_PATH?=$(BUILD_DIR)/$(BUILD_NAME)
 	BUILD_TYPE?=RelWithDebInfo
 	export LLVM_ROOT?=~/install/llvm-master
-	CMAKE_ARGS=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/llvm-master-toolchain.cmake
+	CMAKE_ARGS=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/etc/llvm-master-toolchain.cmake
 else
 	BUILD_NAME?=build
 	BUILD_DIR?=../cmake.bld/$(shell basename $(CURDIR))
