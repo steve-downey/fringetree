@@ -310,14 +310,11 @@ constexpr inline struct view_l {
         }
 
         if (b.left()->isEmpty()) {
-            auto r    = b.right()->visit(*this);
-            auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
-            return View<Tree<T, U>>{view.v_,
-                                    Tree<T, U>::branch(b.left(), view.tree_)};
+            return b.right()->visit(*this);
         }
 
         auto r    = b.left()->visit(*this);
-        auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
+        auto view = r.view();
         return View<Tree<T, U>>{view.v_,
                                 Tree<T, U>::branch(view.tree_, b.right())};
     }
@@ -343,14 +340,11 @@ constexpr inline struct view_r {
         }
 
         if (b.right()->isEmpty()) {
-            auto l    = b.left()->visit(*this);
-            auto view = std::get<typename View<Tree<T, U>>::View_>(l.view_);
-            return View<Tree<T, U>>{view.v_,
-                                    Tree<T, U>::branch(view.tree_, b.right())};
+            return  b.left()->visit(*this);
         }
 
         auto r    = b.right()->visit(*this);
-        auto view = std::get<typename View<Tree<T, U>>::View_>(r.view_);
+        auto view = r.view();
         return View<Tree<T, U>>{view.v_,
                                 Tree<T, U>::branch(b.left(), view.tree_)};
     }
@@ -385,6 +379,35 @@ constexpr auto is_empty = [](auto tree) {
                     };
 
 
+
+template <typename T, typename V>
+struct concat_ {
+    std::shared_ptr<Tree<T, V>> t_;
+    concat_(std::shared_ptr<Tree<T, V>> const& t) : t_(t){};
+    concat_(std::shared_ptr<Tree<T, V>>&& t) : t_(t){};
+
+    auto operator()(Empty<T, V> const&) const -> std::shared_ptr<Tree<T, V>> {
+        return t_;
+    }
+
+    auto operator()(Leaf<T, V> const& leaf) const -> std::shared_ptr<Tree<T, V>> {
+        auto view = view_l_(leaf);
+        return append(view.view().v_, t_);
+    }
+
+    auto operator()(Branch<T, V> const& branch) const
+        -> std::shared_ptr<Tree<T, V>> {
+        auto view = view_l_(branch);
+        auto left = append(view.view().v_, t_);
+        concat_ c(left);
+        return view.view().tree_->visit(c);
+    }
+};
+
+constexpr auto concat = [](auto left, auto right) {
+                            concat_ c(left);
+                            return right->visit(c);
+                        };
 
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS

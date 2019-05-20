@@ -23,4 +23,23 @@ int main(int /*argc*/, char** /*argv*/)
     t1->visit(p);
     t2->visit(p);
     std::cout << "}\n";
+
+    auto left = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto right = Tree::branch(
+        Tree::branch(Tree::leaf(1), Tree::leaf(2)),
+        Tree::leaf(3)
+        );
+
+    auto c = concat(left, right);
+    printer_ p2(std::cout);
+    std::cout << "digraph G {\n";
+    left->visit(p2);
+    right->visit(p2);
+    c->visit(p2);
+    std::cout << "}\n";
+
 }
