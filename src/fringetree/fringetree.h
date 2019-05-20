@@ -59,8 +59,8 @@ class Empty {
 template <typename Tag, typename Value>
 class Tree {
   public:
-    using Tag_ = Tag;
-    using Value_ = Value;
+    using Tag_    = Tag;
+    using Value_  = Value;
     using Leaf_   = Leaf<Tag, Value>;
     using Branch_ = Branch<Tag, Value>;
     using Empty_  = Empty<Tag, Value>;
@@ -96,11 +96,8 @@ class Tree {
         return std::visit(c, data_);
     }
 
-    bool isEmpty() {
-        return std::holds_alternative<Empty_>(data_);
-    }
+    bool isEmpty() { return std::holds_alternative<Empty_>(data_); }
 };
-
 
 constexpr auto tag = [](auto tree) { return tree->tag(); };
 
@@ -265,9 +262,9 @@ struct append_ {
 };
 
 constexpr auto append = [](auto v, auto tree) {
-                             append_ p(v);
-                             return tree->visit(p);
-                         };
+    append_ p(v);
+    return tree->visit(p);
+};
 
 template <typename Tree>
 struct View {
@@ -340,7 +337,7 @@ constexpr inline struct view_r {
         }
 
         if (b.right()->isEmpty()) {
-            return  b.left()->visit(*this);
+            return b.left()->visit(*this);
         }
 
         auto r    = b.right()->visit(*this);
@@ -352,33 +349,30 @@ constexpr inline struct view_r {
 
 constexpr auto view_r = [](auto tree) { return tree->visit(view_r_); };
 
-
 constexpr auto head = [](auto tree) {
-                          auto view = tree->visit(view_l_);
-                          return view.view().v_;
-                      };
+    auto view = tree->visit(view_l_);
+    return view.view().v_;
+};
 
 constexpr auto tail = [](auto tree) {
-                          auto view = tree->visit(view_l_);
-                          return view.view().tree_;
-                      };
+    auto view = tree->visit(view_l_);
+    return view.view().tree_;
+};
 
 constexpr auto last = [](auto tree) {
-                          auto view = tree->visit(view_r_);
-                          return view.view().v_;
-                      };
+    auto view = tree->visit(view_r_);
+    return view.view().v_;
+};
 
 constexpr auto init = [](auto tree) {
-                          auto view = tree->visit(view_r_);
-                          return view.view().tree_;
-                      };
+    auto view = tree->visit(view_r_);
+    return view.view().tree_;
+};
 
 constexpr auto is_empty = [](auto tree) {
-                            auto view = tree->visit(view_r_);
-                            return view.isNil();
-                    };
-
-
+    auto view = tree->visit(view_r_);
+    return view.isNil();
+};
 
 template <typename T, typename V>
 struct concat_ {
@@ -390,24 +384,25 @@ struct concat_ {
         return t_;
     }
 
-    auto operator()(Leaf<T, V> const& leaf) const -> std::shared_ptr<Tree<T, V>> {
+    auto operator()(Leaf<T, V> const& leaf) const
+        -> std::shared_ptr<Tree<T, V>> {
         auto view = view_l_(leaf);
         return append(view.view().v_, t_);
     }
 
     auto operator()(Branch<T, V> const& branch) const
         -> std::shared_ptr<Tree<T, V>> {
-        auto view = view_l_(branch);
-        auto left = append(view.view().v_, t_);
+        auto    view = view_l_(branch);
+        auto    left = append(view.view().v_, t_);
         concat_ c(left);
         return view.view().tree_->visit(c);
     }
 };
 
 constexpr auto concat = [](auto left, auto right) {
-                            concat_ c(left);
-                            return right->visit(c);
-                        };
+    concat_ c(left);
+    return right->visit(c);
+};
 
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
