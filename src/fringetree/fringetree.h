@@ -205,8 +205,11 @@ constexpr auto printer = [](auto& os, auto tree) {
 };
 
 template <typename V>
-struct prepend_ {
+class prepend_ {
+  private:
     V v_;
+
+  public:
     prepend_(V const& v) : v_(v){};
     prepend_(V&& v) : v_(v){};
 
@@ -236,8 +239,11 @@ constexpr auto prepend = [](auto v, auto tree) {
 };
 
 template <typename V>
-struct append_ {
+class append_ {
+  private:
     V v_;
+
+  public:
     append_(V const& v) : v_(v){};
     append_(V&& v) : v_(v){};
 
@@ -268,6 +274,7 @@ constexpr auto append = [](auto v, auto tree) {
 
 template <typename Tree>
 struct View {
+  private:
     struct View_ {
         typename Tree::Value_ v_;
         std::shared_ptr<Tree> tree_;
@@ -277,6 +284,7 @@ struct View {
 
     std::variant<View_, Nil_> view_;
 
+  public:
     View(typename Tree::Value_ const& v, std::shared_ptr<Tree> t)
         : view_(View_{v, t}) {}
 
@@ -286,7 +294,8 @@ struct View {
 
     bool isView() { return std::holds_alternative<View_>(view_); }
 
-    auto view() { return std::get<View_>(view_); }
+    auto value() { return std::get<View_>(view_).v_; }
+    auto tree() { return std::get<View_>(view_).tree_; }
 };
 
 constexpr inline struct view_l {
@@ -310,10 +319,9 @@ constexpr inline struct view_l {
             return b.right()->visit(*this);
         }
 
-        auto r    = b.left()->visit(*this);
-        auto view = r.view();
-        return View<Tree<T, U>>{view.v_,
-                                Tree<T, U>::branch(view.tree_, b.right())};
+        auto r = b.left()->visit(*this);
+        return View<Tree<T, U>>{r.value(),
+                                Tree<T, U>::branch(r.tree(), b.right())};
     }
 } view_l_;
 
@@ -340,10 +348,9 @@ constexpr inline struct view_r {
             return b.left()->visit(*this);
         }
 
-        auto r    = b.right()->visit(*this);
-        auto view = r.view();
-        return View<Tree<T, U>>{view.v_,
-                                Tree<T, U>::branch(b.left(), view.tree_)};
+        auto r = b.right()->visit(*this);
+        return View<Tree<T, U>>{r.value(),
+                                Tree<T, U>::branch(b.left(), r.tree())};
     }
 } view_r_;
 
@@ -351,22 +358,22 @@ constexpr auto view_r = [](auto tree) { return tree->visit(view_r_); };
 
 constexpr auto head = [](auto tree) {
     auto view = tree->visit(view_l_);
-    return view.view().v_;
+    return view.value();
 };
 
 constexpr auto tail = [](auto tree) {
     auto view = tree->visit(view_l_);
-    return view.view().tree_;
+    return view.tree();
 };
 
 constexpr auto last = [](auto tree) {
     auto view = tree->visit(view_r_);
-    return view.view().v_;
+    return view.value();
 };
 
 constexpr auto init = [](auto tree) {
     auto view = tree->visit(view_r_);
-    return view.view().tree_;
+    return view.tree();
 };
 
 constexpr auto is_empty = [](auto tree) {
@@ -375,8 +382,11 @@ constexpr auto is_empty = [](auto tree) {
 };
 
 template <typename T, typename V>
-struct concat_ {
+class concat_ {
+  private:
     std::shared_ptr<Tree<T, V>> t_;
+
+  public:
     concat_(std::shared_ptr<Tree<T, V>> const& t) : t_(t){};
     concat_(std::shared_ptr<Tree<T, V>>&& t) : t_(t){};
 
@@ -387,15 +397,15 @@ struct concat_ {
     auto operator()(Leaf<T, V> const& leaf) const
         -> std::shared_ptr<Tree<T, V>> {
         auto view = view_l_(leaf);
-        return append(view.view().v_, t_);
+        return append(view.value(), t_);
     }
 
     auto operator()(Branch<T, V> const& branch) const
         -> std::shared_ptr<Tree<T, V>> {
         auto    view = view_l_(branch);
-        auto    left = append(view.view().v_, t_);
+        auto    left = append(view.value(), t_);
         concat_ c(left);
-        return view.view().tree_->visit(c);
+        return view.tree()->visit(c);
     }
 };
 

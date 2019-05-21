@@ -176,11 +176,10 @@ TEST(TreeTest, leftView) {
 
      auto vl = view_l(t);
      ASSERT_EQ(vl.isView(), true);
-     auto v = vl.view();
-     ASSERT_EQ(v.v_, 1);
+     ASSERT_EQ(vl.value(), 1);
 
      std::vector<int> expected1 = {2, 3};
-     auto i =  flatten(v.tree_);
+     auto i =  flatten(vl.tree());
      ASSERT_EQ(expected1, i);
 
      auto empty = Tree::empty();
@@ -195,15 +194,13 @@ TEST(TreeTest, leftView) {
          );
      auto vl3 = view_l(t3);
      ASSERT_EQ(vl3.isView(), true);
-     auto v3 = vl3.view();
-     ASSERT_EQ(v3.v_, 1);
+     ASSERT_EQ(vl3.value(), 1);
 
      auto l_ = Tree::leaf(7);
      auto vl4 = view_l(l_);
      ASSERT_EQ(vl4.isView(), true);
-     auto v4= vl4.view();
-     ASSERT_EQ(v4.v_, 7);
-     ASSERT_EQ(v4.tree_->isEmpty(), true);
+     ASSERT_EQ(vl4.value(), 7);
+     ASSERT_EQ(vl4.tree()->isEmpty(), true);
 
      auto left = Tree::branch(
          Tree::branch(Tree::leaf(1), Tree::leaf(2)),
@@ -211,12 +208,12 @@ TEST(TreeTest, leftView) {
          );
      auto v_left = view_l(left);
      ASSERT_EQ(v_left.isView(), true);
-     auto v_v_left = view_l(v_left.view().tree_);
+     auto v_v_left = view_l(v_left.tree());
      ASSERT_EQ(v_v_left.isView(), true);
-     ASSERT_EQ(v_v_left.view().v_, 2);
+     ASSERT_EQ(v_v_left.value(), 2);
 
      std::vector<int> expected4 = {3};
-     auto flat =  flatten(v_v_left.view().tree_);
+     auto flat =  flatten(v_v_left.tree());
      ASSERT_EQ(expected4, flat);
 
 }
@@ -230,11 +227,10 @@ TEST(TreeTest, rightView) {
 
     auto vr = view_r(t);
     ASSERT_EQ(vr.isView(), true);
-    auto v = vr.view();
-    ASSERT_EQ(v.v_, 3);
+    ASSERT_EQ(vr.value(), 3);
 
     std::vector<int> expected1 = {1, 2};
-    auto i =  flatten(v.tree_);
+    auto i =  flatten(vr.tree());
     ASSERT_EQ(expected1, i);
 
     auto empty = Tree::empty();
@@ -249,15 +245,13 @@ TEST(TreeTest, rightView) {
         );
     auto vr3 = view_r(t3);
     ASSERT_EQ(vr3.isView(), true);
-    auto v3 = vr3.view();
-    ASSERT_EQ(v3.v_, 2);
+    ASSERT_EQ(vr3.value(), 2);
 
     auto l_ = Tree::leaf(7);
     auto vr4 = view_r(l_);
     ASSERT_EQ(vr4.isView(), true);
-    auto v4= vr4.view();
-    ASSERT_EQ(v4.v_, 7);
-    ASSERT_EQ(v4.tree_->isEmpty(), true);
+    ASSERT_EQ(vr4.value(), 7);
+    ASSERT_EQ(vr4.tree()->isEmpty(), true);
 }
 
 TEST(TreeTest, listOps) {
