@@ -314,3 +314,22 @@ TEST(TreeTest, concat) {
     ASSERT_EQ(expected1, i);
 
 }
+
+TEST(TreeTest, measure) {
+    using Tree = Tree<int, int>;
+    auto leaf1 = Tree::leaf(1);
+    auto leaf2 = Tree::leaf(2);
+    auto leaf3 = Tree::leaf(3);
+    auto branch1 = Tree::branch(leaf1, leaf2);
+
+    auto tree = Tree::branch(
+        branch1,
+        leaf3
+        );
+
+    ASSERT_EQ(1, measure(leaf1));
+    ASSERT_EQ(1, measure(leaf2));
+    ASSERT_EQ(1, measure(leaf3));
+    ASSERT_EQ(2, measure(branch1));
+    ASSERT_EQ(3, measure(tree));
+}

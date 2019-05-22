@@ -414,6 +414,25 @@ constexpr auto concat = [](auto left, auto right) {
     return right->visit(c);
 };
 
+constexpr inline struct measure {
+    template <typename Tag, typename Value>
+    auto operator()(Empty<Tag, Value> const& e) const -> Tag {
+        return e.tag();
+    }
+
+    template <typename Tag, typename Value>
+    auto operator()(Leaf<Tag, Value> const& l) const -> Tag {
+        return l.tag();
+    }
+
+    template <typename Tag, typename Value>
+    auto operator()(Branch<Tag, Value> const& b) const -> Tag {
+        return b.tag();
+    }
+} measure_;
+
+constexpr auto measure = [](auto tree) { return tree->visit(measure_); };
+
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
 // ============================================================================
