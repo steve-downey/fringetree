@@ -1,10 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.28)
 
 project(Fringetree VERSION 0.0.0 LANGUAGES CXX)
 
 enable_testing()
-
-set(CMAKE_CXX_STANDARD 17)
 
 set(TARGETS_EXPORT_NAME ${CMAKE_PROJECT_NAME}Targets)
 

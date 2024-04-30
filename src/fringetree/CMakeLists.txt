@@ -5,6 +5,8 @@ target_sources(
   PRIVATE
   fringetree.cpp)
 
+target_link_libraries(fringetree monoid)
+
 include(GNUInstallDirs)
 
 target_include_directories(fringetree PUBLIC

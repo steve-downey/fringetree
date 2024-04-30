@@ -1,61 +1,76 @@
-INSTALL_PREFIX?=../install
+#! /usr/bin/make -f
+# -*-makefile-*-
 
-ifeq (clang,$(TOOLCHAIN))
-	BUILD_NAME?=build-clang
-	BUILD_DIR?=../cmake.bld/$(shell basename $(CURDIR))
-	BUILD_PATH?=$(BUILD_DIR)/$(BUILD_NAME)
-	BUILD_TYPE?=RelWithDebInfo
-	CMAKE_ARGS=-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-else ifeq (clang-master,$(TOOLCHAIN))
-	BUILD_NAME?=build-clang-master
-	BUILD_DIR?=../cmake.bld/$(shell basename $(CURDIR))
-	BUILD_PATH?=$(BUILD_DIR)/$(BUILD_NAME)
-	BUILD_TYPE?=RelWithDebInfo
-	export LLVM_ROOT?=~/install/llvm-master
-	CMAKE_ARGS=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/etc/llvm-master-toolchain.cmake
-else
-	BUILD_NAME?=build
-	BUILD_DIR?=../cmake.bld/$(shell basename $(CURDIR))
-	BUILD_PATH?=$(BUILD_DIR)/$(BUILD_NAME)
-	BUILD_TYPE?=RelWithDebInfo
+INSTALL_PREFIX?=/home/sdowney/install
+PROJECT?=$(shell basename $(CURDIR))
+BUILD_DIR?=../cmake.bld/${PROJECT}
+CONFIGURATION_TYPES?=RelWithDebInfo;Debug;Tsan;Asan
+DEST?=../install
+CMAKE_FLAGS?=
+#CONFIG?=RelWithDebInfo
+USE_DOCKER_FILE:=.use-docker
+DOCKER_CMD := docker volume create cmake.bld; docker-compose run --rm dev
+LOCAL_MAKE_CMD := make -f targets.mk
+MAKE_CMD := $(LOCAL_MAKE_CMD)
+
+TARGETS := test clean all ctest realclean cmake
+
+# These targets are only run locally
+LOCAL_ONLY_TARGETS :=
+
+# If .lcldev/use-docker exists, then set `USE_DOCKER` to True
+ifneq ("$(wildcard $(USE_DOCKER_FILE))","")
+	USE_DOCKER := True
 endif
 
-define run_cmake =
-	cmake \
-	-G "Unix Makefiles" \
-	-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
-	-DCMAKE_INSTALL_PREFIX=$(abspath $(INSTALL_PREFIX)) \
-	$(CMAKE_ARGS) \
-	$(CURDIR)
-endef
+ifdef USE_DOCKER
+	MAKE_CMD := $(DOCKER_CMD) $(MAKE_CMD)
+endif
 
-default: build
+export
 
-$(BUILD_PATH):
-	mkdir -p $(BUILD_PATH)
+.DEFAULT:
+	$(MAKE_CMD) $@ CONFIG=$(CONFIG) TOOLCHAIN=$(TOOLCHAIN)
 
-$(BUILD_PATH)/CMakeCache.txt: | $(BUILD_PATH)
-	cd $(BUILD_PATH) && $(run_cmake)
+# These targets are specified separately to enable bash autocomplete.
+$(TARGETS): .gitmodules
+	$(MAKE_CMD) $@ CONFIG=$(CONFIG) TOOLCHAIN=$(TOOLCHAIN)
 
-build: $(BUILD_PATH)/CMakeCache.txt
-	cd $(BUILD_PATH) && make -k
+# These targets that should only be run locally.
+$(LOCAL_ONLY_TARGETS): .gitmodules
+	$(LOCAL_MAKE_CMD) $@
 
-install: $(BUILD_PATH)/CMakeCache.txt
-	cd $(BUILD_PATH) && make install
+.update-submodules:
+	git submodule update --init --recursive
+	touch .update-submodules
 
-ctest: $(BUILD_PATH)/CMakeCache.txt
-	cd $(BUILD_PATH) && ctest
+.gitmodules: .update-submodules
 
-ctest_ : build
-	cd $(BUILD_PATH) && ctest
+.PHONY: use-docker
+use-docker: ## Create docker switch file so that subsequent `make` commands run inside docker container.
+	touch $(USE_DOCKER_FILE)
 
-test: ctest_
+.PHONY: remove-docker
+remove-docker: ## Remove docker switch file so that subsequent `make` commands run locally.
+	$(RM) $(USE_DOCKER_FILE)
 
-cmake: | $(BUILD_PATH)
-	cd $(BUILD_PATH) && $(run-cmake)
+.PHONY: docker-rebuild
+docker-rebuild: ## Rebuilds the docker file using the latest base image.
+	docker-compose build
 
-clean: $(BUILD_PATH)/CMakeCache.txt
-	cd $(BUILD_PATH) && make clean
+.PHONY: docker-clean
+docker-clean: ## Clean up the docker volumes and rebuilds the image from scratch.
+	docker-compose down -v
+	docker-compose build
 
-realclean:
-	rm -rf $(BUILD_PATH)
+.PHONY: docker-shell
+docker-shell: ## Shell in container
+	docker-compose run --rm dev
+
+
+# Help target
+.PHONY: help
+help: ## Show this help.
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'  $(MAKEFILE_LIST) targets.mk | sort
+
+.PHONY: install ctest cmake clean realclean help cmake
