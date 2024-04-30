@@ -433,6 +433,18 @@ constexpr inline struct measure {
 
 constexpr auto measure = [](auto tree) { return tree->visit(measure_); };
 
+template <typename Tag, typename Value>
+struct Split {
+    std::shared_ptr<Tree<Tag, Value>> before_;
+    Value v_;
+    std::shared_ptr<Tree<Tag, Value>> after_;
+
+    Split(std::shared_ptr<Tree<Tag, Value>> before,
+          Value v,
+          std::shared_ptr<Tree<Tag, Value>> after)
+    : before_(before), v_(v), after_(after) {}
+};
+
 // ============================================================================
 //              INLINE FUNCTION AND FUNCTION TEMPLATE DEFINITIONS
 // ============================================================================

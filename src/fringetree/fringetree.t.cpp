@@ -306,8 +306,6 @@ TEST(TreeTest, concat) {
         );
 
     auto c = concat(left, right);
-    printer_ p2(std::cout);
-    c->visit(p2);
     auto i =  flatten(c);
 
     std::vector<int> expected1 = {1, 2, 3, 1, 2, 3};
