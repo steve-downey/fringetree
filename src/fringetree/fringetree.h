@@ -5,6 +5,7 @@
 #include <memory>
 #include <variant>
 #include <vector>
+#include <monoid/monoid.h>
 
 namespace fringetree {
 
@@ -87,8 +88,10 @@ class Tree {
 
     static auto branch(std::shared_ptr<Tree> left, std::shared_ptr<Tree> right)
         -> std::shared_ptr<Tree> {
+        auto& monoid = monoid::monoid_concept_map<Tag>;
+
         return std::make_shared<Tree>(
-            Branch_{(left->tag() + right->tag()), left, right});
+            Branch_{monoid.op(left->tag(), right->tag()), left, right});
     }
 
     template <typename Callable>
@@ -114,7 +117,8 @@ constexpr inline struct breadth {
 
     template <typename T, typename V>
     auto operator()(Branch<T, V> const& b) const -> T {
-        return b.left()->visit(*this) + b.right()->visit(*this);
+        auto& monoid = monoid::monoid_concept_map<T>;
+        return monoid.op(b.left()->visit(*this), b.right()->visit(*this));
     }
 } breadth_;
 
@@ -133,6 +137,7 @@ constexpr inline struct depth {
 
     template <typename T, typename V>
     auto operator()(Branch<T, V> const& b) const -> T {
+
         auto leftDepth  = (b.left()->visit(*this)) + 1;
         auto rightDepth = (b.right()->visit(*this)) + 1;
 
