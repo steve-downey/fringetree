@@ -1,6 +1,7 @@
 #include <fringetree/fringetree.h>
 
 #include <gtest/gtest.h>
+#include <limits>
 
 using namespace fringetree;
 
@@ -330,4 +331,90 @@ TEST(TreeTest, measure) {
     ASSERT_EQ(1, measure(leaf3));
     ASSERT_EQ(2, measure(branch1));
     ASSERT_EQ(3, measure(tree));
+}
+
+template<typename N>
+struct Min {
+    using value_type = N;
+    value_type value_;
+    static auto min() -> Min {
+        return std::numeric_limits<N>::min();
+    }
+
+    Min() : value_(min().value_){}
+    Min(value_type v) : value_(v) {}
+
+    friend bool operator==(const Min& lhs, const Min& rhs) { return lhs.value_ == rhs.value_; }
+    friend bool operator<(const Min& lhs, const Min& rhs) { return lhs.value_ <  rhs.value_; }
+};
+
+template<typename N>
+class MinMonoid {
+  public:
+    using value_type = Min<N>;
+    auto identity(this auto && /*self*/) -> value_type{
+        return value_type::min().value_;
+    }
+
+    auto op(this auto && /*self*/, auto s1, auto s2) -> value_type {
+        return s1 < s2 ? s1 : s2;
+    }
+};
+
+template<typename T>
+struct MeasuredMin {
+    auto measure(this auto && /*self*/, T const& a) -> Min<T> { return a; }
+};
+
+template <typename T>
+constexpr inline auto measured_concept_map<T, Min<T>> = MeasuredMin<T>{};
+
+template<typename M>
+struct MinMonoidMap : public monoid::Monoid<MinMonoid<M>> {
+    using MinMonoid<M>::identity;
+    using MinMonoid<M>::op;
+};
+
+template<>
+constexpr inline auto monoid::monoid_concept_map<Min<int>> = MinMonoidMap<int>{};
+
+TEST(TreeTest, Min) {
+    Min<int> m1;
+    Min<int> m2(0);
+    ASSERT_EQ(m1, m1);
+    ASSERT_EQ(m2, m2);
+    ASSERT_TRUE(m1 < m2);
+
+    auto& monoid = monoid::monoid_concept_map<Min<int>>;
+
+    ASSERT_EQ(m1, monoid.identity());
+    ASSERT_EQ(m1, monoid.op(m1, m2));
+    ASSERT_EQ(m1, monoid.op(m2, m1));
+
+}
+
+TEST(TreeTest, MeasureIntInt) {
+    auto &measured = measured_concept_map<int, int>;
+    ASSERT_EQ(1, measured.measure(0));
+    ASSERT_EQ(1, measured.measure(1));
+
+}
+
+TEST(TreeTest, MinTree) {
+    using Tree = Tree<Min<int>, int>;
+    auto leaf1 = Tree::leaf(1);
+    auto leaf2 = Tree::leaf(2);
+    auto leaf3 = Tree::leaf(3);
+    auto branch1 = Tree::branch(leaf2, leaf3);
+
+    auto tree = Tree::branch(
+        branch1,
+        leaf1
+        );
+
+    ASSERT_EQ(1, measure(leaf1).value_);
+    ASSERT_EQ(2, measure(leaf2).value_);
+    ASSERT_EQ(3, measure(leaf3).value_);
+    ASSERT_EQ(2, measure(branch1).value_);
+    ASSERT_EQ(1, measure(tree).value_);
 }

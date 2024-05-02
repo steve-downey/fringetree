@@ -9,6 +9,21 @@
 
 namespace fringetree {
 
+template <typename Map, typename V, typename A>
+concept MeasuredRequirements = requires(Map m, A a) {
+    { m.measure(a) } -> std::same_as<V>;
+};
+
+template <class T, class V> auto measured_concept_map = std::false_type{};
+
+template<typename T>
+struct MeasuredSize {
+    auto measure(this auto && /*self*/, T const& /*a*/) -> int { return 1; }
+};
+
+template <typename T>
+constexpr inline auto measured_concept_map<T, int> = MeasuredSize<T>{};
+
 template <typename Tag, typename Value>
 class Branch;
 
@@ -44,7 +59,7 @@ class Leaf {
     Value v_;
 
   public:
-    Leaf() : tag_(0), v_(0){};
+    Leaf() : tag_(0), v_(0) {};
     Leaf(Tag tag, Value v) : tag_(tag), v_(v) {}
     auto tag() const -> Tag { return tag_; }
     auto value() const -> Value { return v_; }
@@ -53,9 +68,32 @@ class Leaf {
 template <typename Tag, typename Value>
 class Empty {
   public:
-    Empty(){};
-    auto tag() const -> Tag { return {}; };
+    Empty() {};
+    auto tag() const -> Tag {
+      auto &monoid = monoid::monoid_concept_map<Tag>;
+      return monoid.identity();
+    };
 };
+
+constexpr inline struct measure {
+  template <typename Tag, typename Value>
+  auto operator()(Empty<Tag, Value> const &e) const -> Tag {
+    return e.tag();
+  }
+
+  template <typename Tag, typename Value>
+  auto operator()(Leaf<Tag, Value> const &l) const -> Tag {
+    return l.tag();
+  }
+
+  template <typename Tag, typename Value>
+  auto operator()(Branch<Tag, Value> const &b) const -> Tag {
+    return b.tag();
+  }
+} measure_;
+
+constexpr auto measure = [](auto tree) { return tree->visit(measure_); };
+
 
 template <typename Tag, typename Value>
 class Tree {
@@ -83,11 +121,12 @@ class Tree {
     }
 
     static auto leaf(Value const& v) -> std::shared_ptr<Tree> {
-        return std::make_shared<Tree>(Leaf_{1, v});
+        auto &measured = measured_concept_map<Value, Tag>;
+        return std::make_shared<Tree>(Leaf_{measured.measure(v), v});
     }
 
-    static auto branch(std::shared_ptr<Tree> left, std::shared_ptr<Tree> right)
-        -> std::shared_ptr<Tree> {
+    static auto branch(std::shared_ptr<Tree> left,
+                       std::shared_ptr<Tree> right) -> std::shared_ptr<Tree> {
         auto& monoid = monoid::monoid_concept_map<Tag>;
 
         return std::make_shared<Tree>(
@@ -175,7 +214,7 @@ constexpr auto flatten = [](auto tree) { return tree->visit(flatten_); };
 template <typename OS>
 struct printer_ {
     OS& os_;
-    printer_(OS& os) : os_(os){};
+    printer_(OS& os) : os_(os) {};
 
     template <typename T, typename U>
     void operator()(Empty<T, U> const& e) const {
@@ -215,8 +254,8 @@ class prepend_ {
     V v_;
 
   public:
-    prepend_(V const& v) : v_(v){};
-    prepend_(V&& v) : v_(v){};
+    prepend_(V const& v) : v_(v) {};
+    prepend_(V&& v) : v_(v) {};
 
     template <typename T, typename U>
     auto operator()(Empty<T, U> const&) const -> std::shared_ptr<Tree<T, U>> {
@@ -230,8 +269,8 @@ class prepend_ {
     }
 
     template <typename T, typename U>
-    auto operator()(Branch<T, U> const& b) const
-        -> std::shared_ptr<Tree<T, U>> {
+    auto
+    operator()(Branch<T, U> const& b) const -> std::shared_ptr<Tree<T, U>> {
         return Tree<T, U>::branch(Tree<T, U>::leaf(v_),
                                   Tree<T, U>::branch(b.left(), b.right()));
         ;
@@ -249,8 +288,8 @@ class append_ {
     V v_;
 
   public:
-    append_(V const& v) : v_(v){};
-    append_(V&& v) : v_(v){};
+    append_(V const& v) : v_(v) {};
+    append_(V&& v) : v_(v) {};
 
     template <typename T, typename U>
     auto operator()(Empty<T, U> const&) const -> std::shared_ptr<Tree<T, U>> {
@@ -264,8 +303,8 @@ class append_ {
     }
 
     template <typename T, typename U>
-    auto operator()(Branch<T, U> const& b) const
-        -> std::shared_ptr<Tree<T, U>> {
+    auto
+    operator()(Branch<T, U> const& b) const -> std::shared_ptr<Tree<T, U>> {
         return Tree<T, U>::branch(Tree<T, U>::branch(b.left(), b.right()),
                                   Tree<T, U>::leaf(v_));
         ;
@@ -392,15 +431,15 @@ class concat_ {
     std::shared_ptr<Tree<T, V>> t_;
 
   public:
-    concat_(std::shared_ptr<Tree<T, V>> const& t) : t_(t){};
-    concat_(std::shared_ptr<Tree<T, V>>&& t) : t_(t){};
+    concat_(std::shared_ptr<Tree<T, V>> const& t) : t_(t) {};
+    concat_(std::shared_ptr<Tree<T, V>>&& t) : t_(t) {};
 
     auto operator()(Empty<T, V> const&) const -> std::shared_ptr<Tree<T, V>> {
         return t_;
     }
 
-    auto operator()(Leaf<T, V> const& leaf) const
-        -> std::shared_ptr<Tree<T, V>> {
+    auto
+    operator()(Leaf<T, V> const& leaf) const -> std::shared_ptr<Tree<T, V>> {
         auto view = view_l_(leaf);
         return append(view.value(), t_);
     }
@@ -419,35 +458,17 @@ constexpr auto concat = [](auto left, auto right) {
     return right->visit(c);
 };
 
-constexpr inline struct measure {
-    template <typename Tag, typename Value>
-    auto operator()(Empty<Tag, Value> const& e) const -> Tag {
-        return e.tag();
-    }
-
-    template <typename Tag, typename Value>
-    auto operator()(Leaf<Tag, Value> const& l) const -> Tag {
-        return l.tag();
-    }
-
-    template <typename Tag, typename Value>
-    auto operator()(Branch<Tag, Value> const& b) const -> Tag {
-        return b.tag();
-    }
-} measure_;
-
-constexpr auto measure = [](auto tree) { return tree->visit(measure_); };
 
 template <typename Tag, typename Value>
 struct Split {
     std::shared_ptr<Tree<Tag, Value>> before_;
-    Value v_;
+    Value                             v_;
     std::shared_ptr<Tree<Tag, Value>> after_;
 
     Split(std::shared_ptr<Tree<Tag, Value>> before,
-          Value v,
+          Value                             v,
           std::shared_ptr<Tree<Tag, Value>> after)
-    : before_(before), v_(v), after_(after) {}
+        : before_(before), v_(v), after_(after) {}
 };
 
 // ============================================================================
