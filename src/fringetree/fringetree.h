@@ -14,11 +14,12 @@ concept MeasuredRequirements = requires(Map m, A a) {
     { m.measure(a) } -> std::same_as<V>;
 };
 
-template <class T, class V> auto measured_concept_map = std::false_type{};
+template <class T, class V>
+auto measured_concept_map = std::false_type{};
 
-template<typename T>
+template <typename T>
 struct MeasuredSize {
-    auto measure(this auto && /*self*/, T const& /*a*/) -> int { return 1; }
+    auto measure(this auto&& /*self*/, T const& /*a*/) -> int { return 1; }
 };
 
 template <typename T>
@@ -70,30 +71,29 @@ class Empty {
   public:
     Empty() {};
     auto tag() const -> Tag {
-      auto &monoid = monoid::monoid_concept_map<Tag>;
-      return monoid.identity();
+        auto& monoid = monoid::monoid_concept_map<Tag>;
+        return monoid.identity();
     };
 };
 
 constexpr inline struct measure {
-  template <typename Tag, typename Value>
-  auto operator()(Empty<Tag, Value> const &e) const -> Tag {
-    return e.tag();
-  }
+    template <typename Tag, typename Value>
+    auto operator()(Empty<Tag, Value> const& e) const -> Tag {
+        return e.tag();
+    }
 
-  template <typename Tag, typename Value>
-  auto operator()(Leaf<Tag, Value> const &l) const -> Tag {
-    return l.tag();
-  }
+    template <typename Tag, typename Value>
+    auto operator()(Leaf<Tag, Value> const& l) const -> Tag {
+        return l.tag();
+    }
 
-  template <typename Tag, typename Value>
-  auto operator()(Branch<Tag, Value> const &b) const -> Tag {
-    return b.tag();
-  }
+    template <typename Tag, typename Value>
+    auto operator()(Branch<Tag, Value> const& b) const -> Tag {
+        return b.tag();
+    }
 } measure_;
 
 constexpr auto measure = [](auto tree) { return tree->visit(measure_); };
-
 
 template <typename Tag, typename Value>
 class Tree {
@@ -121,7 +121,7 @@ class Tree {
     }
 
     static auto leaf(Value const& v) -> std::shared_ptr<Tree> {
-        auto &measured = measured_concept_map<Value, Tag>;
+        auto& measured = measured_concept_map<Value, Tag>;
         return std::make_shared<Tree>(Leaf_{measured.measure(v), v});
     }
 
@@ -457,7 +457,6 @@ constexpr auto concat = [](auto left, auto right) {
     concat_ c(left);
     return right->visit(c);
 };
-
 
 template <typename Tag, typename Value>
 struct Split {
